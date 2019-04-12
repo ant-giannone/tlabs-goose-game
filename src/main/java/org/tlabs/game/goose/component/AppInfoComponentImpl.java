@@ -46,4 +46,10 @@ public class AppInfoComponentImpl implements AppInfoComponent {
 
         return  properties.getProperty("application.viewer.logs.appender.name");
     }
+
+    @Override
+    public int getVictoryBoardCellNumber() {
+
+        return Integer.parseInt(properties.getProperty("application.board.cell.victory"));
+    }
 }

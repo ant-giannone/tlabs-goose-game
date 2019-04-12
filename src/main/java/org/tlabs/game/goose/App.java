@@ -1,9 +1,8 @@
 package org.tlabs.game.goose;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tlabs.game.goose.component.GameManager;
 import org.tlabs.game.goose.component.GameManagerImpl;
+import org.tlabs.game.goose.exception.ApplicationException;
 
 /**
  * Hello world!
@@ -11,14 +10,17 @@ import org.tlabs.game.goose.component.GameManagerImpl;
  */
 public class App {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(App.class);
-
     public static void main( String[] args ) {
 
         GameManager gameManager = GameManagerImpl.getInstance();
-        gameManager.initGame();
 
-        gameManager.addPlayer();
-        gameManager.showPlayers();
+        try {
+
+            gameManager.initGame();
+            gameManager.playGame();
+        } catch (ApplicationException e) {
+
+            gameManager.gameTerminatedWithError();
+        }
     }
 }

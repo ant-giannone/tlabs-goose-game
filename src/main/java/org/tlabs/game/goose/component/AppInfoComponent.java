@@ -4,9 +4,11 @@ import org.tlabs.game.goose.component.ui.SimpleViewerType;
 
 public interface AppInfoComponent {
 
-    public String getInfoApp();
+    String getInfoApp();
 
     SimpleViewerType getDefaultViewerType();
 
     String getDefaultLogsViewer();
+
+    int getVictoryBoardCellNumber();
 }

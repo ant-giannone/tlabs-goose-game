@@ -1,11 +1,19 @@
 package org.tlabs.game.goose.component;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.tlabs.game.goose.domain.Player;
+import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
+
+import java.util.List;
+import java.util.Optional;
 
 public class RequestAnalyzerImpl implements RequestAnalyzer {
 
-    private String preAnalyzeRequest(String request) throws UnknownRequestFormatException {
+    private String[] preAnalyzeRequest(final String request) throws UnknownRequestFormatException {
 
         if(StringUtils.isEmpty(request)) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: data is empty");
@@ -17,15 +25,31 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
             throw new UnknownRequestFormatException("Unable to understand request grammar: normalized data is empty");
         }
 
-        return normalizedRequest;
+        return normalizedRequest.split(" ");
     }
 
     @Override
-    public String doYouWantAddPlayer(String request) throws UnknownRequestFormatException {
+    public KeyTerms getKeyTerm(final String request)  throws UnknownRequestFormatException {
 
-        String preAnalyzedRequest = preAnalyzeRequest(request);
+        String[] terms = preAnalyzeRequest(request);
 
-        String[] terms = preAnalyzedRequest.split(" ");
+        if(terms==null || terms.length<=1) {
+            throw new UnknownRequestFormatException("Unable to understand request grammar: insufficient terms");
+        }
+
+        if("add".equals(terms[0])) {
+            return KeyTerms.ADD;
+        }else if("move".equals(terms[0])) {
+            return KeyTerms.MOVE;
+        }
+
+        throw new UnknownRequestFormatException("Unable to understand request grammar: any key-term found");
+    }
+
+    @Override
+    public String doYouWantAddPlayer(final String request) throws UnknownRequestFormatException {
+
+        String[] terms = preAnalyzeRequest(request);
 
         if(terms==null || terms.length!=3) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
@@ -45,10 +69,51 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
     }
 
     @Override
-    public boolean doYouDigitQuit(String request) throws UnknownRequestFormatException {
+    public boolean doYouDigitQuit(final String request) throws UnknownRequestFormatException {
 
-        String preAnalyzedRequest = preAnalyzeRequest(request);
+        String[] terms = preAnalyzeRequest(request);
 
-        return "quit".equals(preAnalyzedRequest);
+        if(terms==null || terms.length!=1) {
+            throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
+        }
+
+        return "quit".equals(terms[0]);
+    }
+
+    @Override
+    public Pair<Player, Integer> howManyStepFor(final List<Player> players, final String request)
+            throws UnknownRequestFormatException, UnknownPlayerException {
+
+        String[] terms = preAnalyzeRequest(request);
+
+        if(terms==null || terms.length!=4) {
+            throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
+        }
+
+        if(!"move".equals(terms[0])) {
+            throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
+        }
+
+        String[] diceRoll = terms[3].split(",");
+
+        if(diceRoll==null || diceRoll.length!=2 ||
+                !(NumberUtils.isDigits(diceRoll[0]) && NumberUtils.isDigits(diceRoll[1]))) {
+            throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
+        }
+
+        Optional<Player> player = getPlayer(players, terms[1]);
+
+        if(!player.isPresent()) {
+            throw new UnknownPlayerException("Player not found with name: " + terms[1]);
+        }
+
+        int steps = Integer.parseInt(diceRoll[0]) + Integer.parseInt(diceRoll[1]);
+
+        return new ImmutablePair<>(player.get(), steps);
+    }
+
+    private Optional<Player> getPlayer(final List<Player> players, String name) {
+
+        return players.stream().findAny().filter(player -> player.getName().equals(name));
     }
 }

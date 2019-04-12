@@ -4,11 +4,11 @@ package org.tlabs.game.goose.component;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tlabs.game.goose.component.ui.SimpleUiViewerFactory;
 import org.tlabs.game.goose.component.ui.SimpleUiViewerFactoryImpl;
 import org.tlabs.game.goose.component.ui.SimpleViewerComponent;
+import org.tlabs.game.goose.domain.Board;
 import org.tlabs.game.goose.domain.Player;
-import org.tlabs.game.goose.exception.DuplicatePlayerException;
+import org.tlabs.game.goose.exception.ApplicationException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
 
 import java.io.BufferedReader;
@@ -23,6 +23,7 @@ public class GameManagerImpl implements GameManager {
 
     private static Scanner scanner = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
 
+    private Board board;
     private List<Player> players;
     private ResourceBundle messagesResourceBundle;
     private RequestAnalyzer requestAnalyzer;
@@ -37,11 +38,9 @@ public class GameManagerImpl implements GameManager {
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
 
         requestAnalyzer = new ProxyRequestAnalyzer();
-        appInfoComponent = new AppInfoComponentImpl();
+        appInfoComponent = new ProxyAppInfoComponent();
 
-        SimpleUiViewerFactory<SimpleViewerComponent> simpleUiViewerFactory = SimpleUiViewerFactoryImpl.getInstance();
-
-        simpleViewerComponent = simpleUiViewerFactory.create(appInfoComponent.getDefaultViewerType());
+        simpleViewerComponent = SimpleUiViewerFactoryImpl.getInstance().create(appInfoComponent.getDefaultViewerType());
     }
 
     private static class SingletonHelper {
@@ -53,11 +52,35 @@ public class GameManagerImpl implements GameManager {
     }
 
     @Override
-    public void initGame() {
+    public void gameTerminatedWithError() {
+        simpleViewerComponent.view(messagesResourceBundle.getString("application.message.panic_error"));
+    }
+
+    @Override
+    public void initGame() throws ApplicationException {
 
         LOGGER.info("START :: init-game");
 
         simpleViewerComponent.view(appInfoComponent.getInfoApp());
+
+        if(board == null) {
+            board = new Board(appInfoComponent.getVictoryBoardCellNumber());
+        }
+
+        boolean finished = false;
+        String request = null;
+
+        if (scanner.ioException() != null) {
+
+            simpleViewerComponent.view(messagesResourceBundle.getString("application.message.panic_error"));
+
+            LOGGER.error("PROCESSING :: init-game - an error occurred on I/O stream, game interrupted: {}",
+                    scanner.ioException().getMessage());
+
+            LOGGER.info("END :: init-game ");
+
+            throw new ApplicationException("Game interrupted, restart the game...", scanner.ioException());
+        }
 
         if (CollectionUtils.isEmpty(players)) {
 
@@ -65,57 +88,89 @@ public class GameManagerImpl implements GameManager {
 
             simpleViewerComponent.view(messagesResourceBundle.getString("application.message.no_participant"));
 
-            addPlayer();
-            showPlayers();
+            while (!finished) {
+
+                request = scanner.nextLine();
+
+                try {
+
+                    addPlayer(request);
+                    finished = true;
+                } catch (UnknownRequestFormatException e) {
+
+                    LOGGER.error("PROCESSING :: init-game - An error occurred: {}", e.getMessage());
+                    simpleViewerComponent.view(messagesResourceBundle.getString("application.message.not_understand_request"));
+                }
+            }
         }
 
         LOGGER.info("END :: init-game");
     }
 
     @Override
-    public void addPlayer() {
+    public void playGame() throws ApplicationException {
 
-        LOGGER.info("START :: add-player");
+        LOGGER.info("START :: play-game");
 
+        boolean finished = false;
         String request = null;
-        boolean isRequestAccomplished = false;
 
-        while (!isRequestAccomplished) {
+        while (!finished) {
+
+            if (scanner.ioException() != null) {
+
+                simpleViewerComponent.view(messagesResourceBundle.getString("application.message.panic_error"));
+
+                LOGGER.error("PROCESSING :: play-game - an error occurred on I/O stream, game interrupted: {}",
+                        scanner.ioException().getMessage());
+
+                LOGGER.info("END :: play-game ");
+
+                throw new ApplicationException("Game interrupted, restart the game...", scanner.ioException());
+            }
+
+            request = scanner.nextLine();
 
             try {
 
-                if (scanner.ioException() != null) {
+                KeyTerms keyTerm = requestAnalyzer.getKeyTerm(request);
 
-                    simpleViewerComponent.view(messagesResourceBundle.getString("application.message.panic_error"));
-
-                    LOGGER.error("PROCESSING :: add-player - an error occurred on I/O stream, game interrupted: {}",
-                            scanner.ioException().getMessage());
-
-                    LOGGER.info("END :: add-player");
-
-                    throw new RuntimeException("Game interrupted, restart the game...");
+                if(keyTerm.equals(KeyTerms.ADD)) {
+                    addPlayer(request);
+                } else if(keyTerm.equals(KeyTerms.MOVE)) {
+                    movePlayer(request);
                 }
-
-                request = scanner.nextLine();
-
-                boolean doYouDigitQuit = requestAnalyzer.doYouDigitQuit(request);
-
-                if (doYouDigitQuit) {
-
-                    LOGGER.debug("PROCESSING :: add-player - processing interrupted: request is 'quit'");
-                    break;
-                }
-
-                String newPlayerName = requestAnalyzer.doYouWantAddPlayer(request);
-                Player player = new Player.Builder(newPlayerName).build();
-
-                isRequestAccomplished = addCurrentPlayer(player);
             } catch (UnknownRequestFormatException e) {
 
+                LOGGER.error("PROCESSING :: play-game - An error occurred: {}", e.getMessage());
                 simpleViewerComponent.view(messagesResourceBundle.getString("application.message.not_understand_request"));
-
-                LOGGER.warn("PROCESSING :: add-player - an error occurred: {}", e.getMessage());
             }
+        }
+    }
+
+    @Override
+    public void addPlayer(String request) throws UnknownRequestFormatException {
+
+        LOGGER.info("START :: add-player");
+
+        String newPlayerName = requestAnalyzer.doYouWantAddPlayer(request);
+        Player player = new Player.Builder(newPlayerName).build();
+
+        if(!isDuplicatePlayer(player)) {
+
+            this.players.add(player);
+            this.board.addPlayer(player);
+
+            showPlayers();
+
+            LOGGER.info("PROCESSING :: add-player - new player added with name: {}", player.getName());
+        }else {
+
+            simpleViewerComponent.view(
+                    MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.duplicate_player"),
+                            player.getName())
+            );
         }
 
         LOGGER.info("END :: add-player");
@@ -124,12 +179,17 @@ public class GameManagerImpl implements GameManager {
     @Override
     public void showPlayers() {
 
-        String players = this.players.stream().map(
-                player -> player.getName()).collect(Collectors.joining(","));
+        String players = this.board.getPlayers().stream().map(
+                player -> player.getName()).collect(Collectors.joining(", "));
 
         String message = messagesResourceBundle.getString("application.message.players.list");
 
         simpleViewerComponent.view(MessageFormat.format(message, players));
+    }
+
+    @Override
+    public void movePlayer(String request) throws UnknownRequestFormatException {
+
     }
 
     private boolean isDuplicatePlayer(final Player newPlayer) {
@@ -143,25 +203,5 @@ public class GameManagerImpl implements GameManager {
         }
 
         return false;
-    }
-
-    private boolean addCurrentPlayer(final Player player) {
-
-        if(isDuplicatePlayer(player)) {
-
-            simpleViewerComponent.view(
-                    MessageFormat.format(
-                            messagesResourceBundle.getString("application.message.duplicate_player"),
-                            player.getName())
-            );
-
-            return false;
-        }
-
-        this.players.add(player);
-
-        LOGGER.info("PROCESSING :: add-player - new player added with name: {}", player.getName());
-
-        return true;
     }
 }
