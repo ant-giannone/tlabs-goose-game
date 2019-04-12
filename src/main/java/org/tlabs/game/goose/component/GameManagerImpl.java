@@ -109,21 +109,10 @@ public class GameManagerImpl implements GameManager {
                 String newPlayerName = requestAnalyzer.doYouWantAddPlayer(request);
                 Player player = new Player.Builder(newPlayerName).build();
 
-                checkDuplicatePlayer(player);
-
-                this.players.add(player);
-
-                isRequestAccomplished = true;
-
-                LOGGER.info("PROCESSING :: add-player - new player added with name: {}", player.getName());
+                isRequestAccomplished = addCurrentPlayer(player);
             } catch (UnknownRequestFormatException e) {
 
                 simpleViewerComponent.view(messagesResourceBundle.getString("application.message.not_understand_request"));
-
-                LOGGER.warn("PROCESSING :: add-player - an error occurred: {}", e.getMessage());
-            } catch (DuplicatePlayerException e) {
-
-                simpleViewerComponent.view(messagesResourceBundle.getString("application.message.duplicate_player"));
 
                 LOGGER.warn("PROCESSING :: add-player - an error occurred: {}", e.getMessage());
             }
@@ -143,13 +132,36 @@ public class GameManagerImpl implements GameManager {
         simpleViewerComponent.view(MessageFormat.format(message, players));
     }
 
-    private void checkDuplicatePlayer(Player newPlayer) throws DuplicatePlayerException {
+    private boolean isDuplicatePlayer(final Player newPlayer) {
 
         Optional<Player> optionalPlayer = players.stream().findAny().filter(
                 player -> newPlayer.getName().equals(player.getName()));
 
         if (optionalPlayer.isPresent()) {
-            throw new DuplicatePlayerException("Player already exists");
+
+            return true;
         }
+
+        return false;
+    }
+
+    private boolean addCurrentPlayer(final Player player) {
+
+        if(isDuplicatePlayer(player)) {
+
+            simpleViewerComponent.view(
+                    MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.duplicate_player"),
+                            player.getName())
+            );
+
+            return false;
+        }
+
+        this.players.add(player);
+
+        LOGGER.info("PROCESSING :: add-player - new player added with name: {}", player.getName());
+
+        return true;
     }
 }
