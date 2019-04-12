@@ -1,6 +1,7 @@
 package org.tlabs.game.goose.component;
 
 import org.tlabs.game.goose.exception.ApplicationException;
+import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
 
 public interface GameManager {
@@ -14,5 +15,5 @@ public interface GameManager {
     public void addPlayer(String request) throws UnknownRequestFormatException;
     public void showPlayers();
 
-    void movePlayer(String request) throws UnknownRequestFormatException;
+    void movePlayer(String request) throws UnknownRequestFormatException, UnknownPlayerException;
 }

@@ -1,5 +1,6 @@
 package org.tlabs.game.goose.domain;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -21,6 +22,11 @@ public class Board {
 
     public Set<Player> getPlayers() {
 
-        return players.keySet();
+        return Collections.unmodifiableSet(players.keySet());
+    }
+
+    public PlayerStatus getPlayerStatus(Player player) {
+
+        return players.get(player);
     }
 }

@@ -2,13 +2,16 @@ package org.tlabs.game.goose.component;
 
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tlabs.game.goose.component.ui.SimpleUiViewerFactoryImpl;
 import org.tlabs.game.goose.component.ui.SimpleViewerComponent;
 import org.tlabs.game.goose.domain.Board;
 import org.tlabs.game.goose.domain.Player;
+import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.ApplicationException;
+import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
 
 import java.io.BufferedReader;
@@ -144,6 +147,10 @@ public class GameManagerImpl implements GameManager {
 
                 LOGGER.error("PROCESSING :: play-game - An error occurred: {}", e.getMessage());
                 simpleViewerComponent.view(messagesResourceBundle.getString("application.message.not_understand_request"));
+            } catch (UnknownPlayerException e) {
+
+                LOGGER.error("PROCESSING :: play-game - An error occurred: {}", e.getMessage());
+                simpleViewerComponent.view(messagesResourceBundle.getString("application.message.unknown_player_to_move"));
             }
         }
     }
@@ -188,8 +195,42 @@ public class GameManagerImpl implements GameManager {
     }
 
     @Override
-    public void movePlayer(String request) throws UnknownRequestFormatException {
+    public void movePlayer(String request) throws UnknownRequestFormatException, UnknownPlayerException {
 
+        LOGGER.info("START :: add-player");
+
+        Set<Player> players = board.getPlayers();
+        Pair<Player, PlayerStatus> statusPair = requestAnalyzer.howManyStepFor(players, request);
+
+        PlayerStatus playerStatus = board.getPlayerStatus(statusPair.getKey());
+
+        String message = messagesResourceBundle.getString("application.message.player_move");
+
+        int nextCell = playerStatus.getCurrentCell() + statusPair.getValue().getLastSteps();
+
+        if(playerStatus.isStart()) {
+
+            simpleViewerComponent.view(MessageFormat.format(message,
+                    statusPair.getKey().getName(),
+                    statusPair.getValue().getLastDiceRoll(),
+                    statusPair.getKey().getName(),
+                    "Start",
+                    nextCell));
+        }else {
+
+            simpleViewerComponent.view(MessageFormat.format(message,
+                    statusPair.getKey().getName(),
+                    statusPair.getValue().getLastDiceRoll(),
+                    statusPair.getKey().getName(),
+                    playerStatus.getCurrentCell(),
+                    nextCell));
+        }
+
+        playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
+        playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
+        playerStatus.setCurrentCell(nextCell);
+
+        LOGGER.info("END :: add-player");
     }
 
     private boolean isDuplicatePlayer(final Player newPlayer) {

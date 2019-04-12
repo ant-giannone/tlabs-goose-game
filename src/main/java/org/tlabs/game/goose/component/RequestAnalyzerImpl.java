@@ -5,11 +5,15 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tlabs.game.goose.domain.Player;
+import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class RequestAnalyzerImpl implements RequestAnalyzer {
 
@@ -81,12 +85,12 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
     }
 
     @Override
-    public Pair<Player, Integer> howManyStepFor(final List<Player> players, final String request)
+    public Pair<Player, PlayerStatus> howManyStepFor(final Set<Player> players, final String request)
             throws UnknownRequestFormatException, UnknownPlayerException {
 
         String[] terms = preAnalyzeRequest(request);
 
-        if(terms==null || terms.length!=4) {
+        if(terms==null || terms.length!=3) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
@@ -94,7 +98,7 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
-        String[] diceRoll = terms[3].split(",");
+        String[] diceRoll = terms[2].split(",");
 
         if(diceRoll==null || diceRoll.length!=2 ||
                 !(NumberUtils.isDigits(diceRoll[0]) && NumberUtils.isDigits(diceRoll[1]))) {
@@ -109,11 +113,16 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
         int steps = Integer.parseInt(diceRoll[0]) + Integer.parseInt(diceRoll[1]);
 
-        return new ImmutablePair<>(player.get(), steps);
+        PlayerStatus playerStatus = new PlayerStatus();
+        playerStatus.setLastDiceRoll(terms[2]);
+        playerStatus.setLastSteps(steps);
+
+
+        return new ImmutablePair<>(player.get(), playerStatus);
     }
 
-    private Optional<Player> getPlayer(final List<Player> players, String name) {
+    private Optional<Player> getPlayer(final Set<Player> players, String name) {
 
-        return players.stream().findAny().filter(player -> player.getName().equals(name));
+        return players.stream().filter(player -> player.getName().equals(name)).findFirst();
     }
 }
