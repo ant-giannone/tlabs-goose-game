@@ -10,11 +10,19 @@ import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
+import org.tlabs.game.goose.exception.UnknownStrategyException;
 
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
 public class RequestAnalyzerImpl implements RequestAnalyzer {
+
+    protected HashMap<String, MovePlayerStrategy> movePlayerStrategyHashMap;
+
+    public RequestAnalyzerImpl() {
+        movePlayerStrategyHashMap = new HashMap<>();
+    }
 
     private String[] preAnalyzeRequest(final String request) throws UnknownRequestFormatException {
 
@@ -85,7 +93,7 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
     @Override
     public Pair<Player, PlayerStatus> howManyStepFor(final Set<Player> players, final String request)
-            throws UnknownRequestFormatException, UnknownPlayerException {
+            throws UnknownRequestFormatException, UnknownPlayerException, UnknownStrategyException {
 
         String[] terms = preAnalyzeRequest(request);
 
@@ -93,13 +101,7 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
-        MovePlayerStrategy movePlayerStrategy = null;
-
-        if(terms.length==2) {
-            movePlayerStrategy = new MovePlayerWithDiceStrategy();
-        }else if(terms.length==3) {
-            movePlayerStrategy = new MovePlayerWithoutDiceStrategy();
-        }
+        MovePlayerStrategy movePlayerStrategy = getMovePlayerStrategy(terms);
 
         PlayerStatus playerStatus = movePlayerStrategy.execute(terms);
 
@@ -114,5 +116,34 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
     private Optional<Player> getPlayer(final Set<Player> players, String name) {
 
         return players.stream().filter(player -> player.getName().equals(name)).findFirst();
+    }
+
+    private MovePlayerStrategy getMovePlayerStrategy(String[] terms) throws UnknownStrategyException {
+
+        if(terms.length==2) {
+
+            if(!movePlayerStrategyHashMap.containsKey(MovePlayerWithDiceStrategy.class.getName())) {
+
+                movePlayerStrategyHashMap.put(
+                        MovePlayerWithDiceStrategy.class.getName(),
+                        new MovePlayerWithDiceStrategy()
+                );
+            }
+
+            return movePlayerStrategyHashMap.get(MovePlayerWithDiceStrategy.class.getName());
+        }else if(terms.length==3) {
+
+            if(!movePlayerStrategyHashMap.containsKey(MovePlayerWithoutDiceStrategy.class.getName())) {
+
+                movePlayerStrategyHashMap.put(
+                        MovePlayerWithoutDiceStrategy.class.getName(),
+                        new MovePlayerWithoutDiceStrategy()
+                );
+            }
+
+            return movePlayerStrategyHashMap.get(MovePlayerWithoutDiceStrategy.class.getName());
+        }
+
+        throw new UnknownStrategyException("Unknown strategy for MovePlayerStrategy implementation");
     }
 }

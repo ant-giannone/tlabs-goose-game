@@ -11,4 +11,8 @@ public interface AppInfoComponent {
     String getDefaultLogsViewer();
 
     int getVictoryBoardCellNumber();
+
+    int getBridgeCell();
+
+    int getJumpCellFromBridge();
 }

@@ -14,6 +14,7 @@ import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.ApplicationException;
 import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
+import org.tlabs.game.goose.exception.UnknownStrategyException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -154,6 +155,15 @@ public class GameManagerImpl implements GameManager {
 
                 LOGGER.error("PROCESSING :: play-game - An error occurred: {}", e.getMessage());
                 simpleViewerComponent.view(messagesResourceBundle.getString("application.message.unknown_player_to_move"));
+            } catch (UnknownStrategyException e) {
+
+                simpleViewerComponent.view(messagesResourceBundle.getString("application.message.panic_error"));
+
+                LOGGER.error("PROCESSING :: play-game - an error occurred on Strategy selection, game interrupted: {}", e);
+
+                LOGGER.info("END :: play-game ");
+
+                throw new ApplicationException("Game interrupted, restart the game...", e);
             }
         }
     }
@@ -198,7 +208,8 @@ public class GameManagerImpl implements GameManager {
     }
 
     @Override
-    public void movePlayer(String request) throws UnknownRequestFormatException, UnknownPlayerException {
+    public void movePlayer(String request) throws UnknownRequestFormatException,
+            UnknownPlayerException, UnknownStrategyException {
 
         LOGGER.info("START :: add-player");
 
@@ -206,13 +217,27 @@ public class GameManagerImpl implements GameManager {
         Pair<Player, PlayerStatus> statusPair = requestAnalyzer.howManyStepFor(players, request);
 
         PlayerStatus playerStatus = board.getPlayerStatus(statusPair.getKey());
+        int bridgeCell = appInfoComponent.getBridgeCell();
+        int jumpCellFromBridge = appInfoComponent.getJumpCellFromBridge();
 
         String message = messagesResourceBundle.getString("application.message.player_move");
 
         int nextCell = playerStatus.getCurrentCell() + statusPair.getValue().getLastSteps();
         int lastBoadCell = board.getFinalCell();
 
-        if(playerStatus.isStart()) {
+        if(nextCell==bridgeCell) {
+
+            simpleViewerComponent.view(MessageFormat.format(
+                    messagesResourceBundle.getString("application.message.player_move_and_bridge"),
+                    statusPair.getKey().getName(),
+                    statusPair.getValue().getLastDiceRoll(),
+                    statusPair.getKey().getName(),
+                    (playerStatus.isStart())?"Start":playerStatus.getCurrentCell(),
+                    statusPair.getKey().getName(),
+                    jumpCellFromBridge));
+
+            playerStatus.setCurrentCell(jumpCellFromBridge);
+        }else if(playerStatus.isStart()) {
 
             simpleViewerComponent.view(MessageFormat.format(message,
                     statusPair.getKey().getName(),

@@ -52,4 +52,16 @@ public class AppInfoComponentImpl implements AppInfoComponent {
 
         return Integer.parseInt(properties.getProperty("application.board.cell.victory"));
     }
+
+    @Override
+    public int getBridgeCell() {
+
+        return Integer.parseInt(properties.getProperty("application.board.element.bridge.cell"));
+    }
+
+    @Override
+    public int getJumpCellFromBridge() {
+
+        return Integer.parseInt(properties.getProperty("application.board.element.bridge.jump_to_cell"));
+    }
 }

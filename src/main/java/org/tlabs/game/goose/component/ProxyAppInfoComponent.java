@@ -36,4 +36,16 @@ public class ProxyAppInfoComponent implements AppInfoComponent {
         checkInstance();
         return  appInfoComponent.getVictoryBoardCellNumber();
     }
+
+    @Override
+    public int getBridgeCell() {
+        checkInstance();
+        return appInfoComponent.getBridgeCell();
+    }
+
+    @Override
+    public int getJumpCellFromBridge() {
+        checkInstance();
+        return appInfoComponent.getJumpCellFromBridge();
+    }
 }

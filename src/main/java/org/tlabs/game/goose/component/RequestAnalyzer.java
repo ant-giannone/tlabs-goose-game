@@ -5,6 +5,7 @@ import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.UnknownPlayerException;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
+import org.tlabs.game.goose.exception.UnknownStrategyException;
 
 import java.util.Set;
 
@@ -16,5 +17,5 @@ public interface RequestAnalyzer {
     public boolean doYouDigitQuit(String request) throws UnknownRequestFormatException;
 
     Pair<Player, PlayerStatus> howManyStepFor(final Set<Player> players, String request)
-            throws UnknownRequestFormatException, UnknownPlayerException;
+            throws UnknownRequestFormatException, UnknownPlayerException, UnknownStrategyException;
 }
