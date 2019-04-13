@@ -11,6 +11,12 @@ import java.util.Set;
 public class ProxyRequestAnalyzer implements RequestAnalyzer {
 
     private RequestAnalyzer requestAnalyzer;
+    private AppInfoComponent appInfoComponent;
+
+
+    public ProxyRequestAnalyzer(AppInfoComponent appInfoComponent) {
+        this.appInfoComponent = appInfoComponent;
+    }
 
     private void checkInstance() {
 

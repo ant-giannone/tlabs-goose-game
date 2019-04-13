@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.tlabs.game.goose.component.ui.SimpleUiViewerFactoryImpl;
 import org.tlabs.game.goose.component.ui.SimpleViewerComponent;
 import org.tlabs.game.goose.domain.Board;
+import org.tlabs.game.goose.domain.Dice;
 import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.ApplicationException;
@@ -40,8 +41,8 @@ public class GameManagerImpl implements GameManager {
         Locale locale = Locale.getDefault();
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
 
-        requestAnalyzer = new ProxyRequestAnalyzer();
         appInfoComponent = new ProxyAppInfoComponent();
+        requestAnalyzer = new ProxyRequestAnalyzer(appInfoComponent);
 
         simpleViewerComponent = SimpleUiViewerFactoryImpl.getInstance().create(appInfoComponent.getDefaultViewerType());
     }

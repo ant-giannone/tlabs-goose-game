@@ -1,9 +1,11 @@
 package org.tlabs.game.goose.component;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.tlabs.game.goose.component.strategy.MovePlayerStrategy;
+import org.tlabs.game.goose.component.strategy.MovePlayerWithDiceStrategy;
+import org.tlabs.game.goose.component.strategy.MovePlayerWithoutDiceStrategy;
 import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.UnknownPlayerException;
@@ -11,9 +13,6 @@ import org.tlabs.game.goose.exception.UnknownRequestFormatException;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 public class RequestAnalyzerImpl implements RequestAnalyzer {
 
@@ -90,33 +89,24 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
         String[] terms = preAnalyzeRequest(request);
 
-        if(terms==null || terms.length!=3) {
+        if(terms==null || terms.length>3) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
-        if(!"move".equals(terms[0])) {
-            throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
+        MovePlayerStrategy movePlayerStrategy = null;
+
+        if(terms.length==2) {
+            movePlayerStrategy = new MovePlayerWithDiceStrategy();
+        }else if(terms.length==3) {
+            movePlayerStrategy = new MovePlayerWithoutDiceStrategy();
         }
 
-        String[] diceRoll = terms[2].split(",");
-
-        if(diceRoll==null || diceRoll.length!=2 ||
-                !(NumberUtils.isDigits(diceRoll[0]) && NumberUtils.isDigits(diceRoll[1]))) {
-            throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
-        }
+        PlayerStatus playerStatus = movePlayerStrategy.execute(terms);
 
         Optional<Player> player = getPlayer(players, terms[1]);
 
-        if(!player.isPresent()) {
+        if(!player.isPresent())
             throw new UnknownPlayerException("Player not found with name: " + terms[1]);
-        }
-
-        int steps = Integer.parseInt(diceRoll[0]) + Integer.parseInt(diceRoll[1]);
-
-        PlayerStatus playerStatus = new PlayerStatus();
-        playerStatus.setLastDiceRoll(terms[2]);
-        playerStatus.setLastSteps(steps);
-
 
         return new ImmutablePair<>(player.get(), playerStatus);
     }
