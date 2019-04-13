@@ -248,6 +248,7 @@ public class GameManagerImpl implements GameManager {
 
                     messageForGoose += moveAgainMessage;
 
+                    //Update Player status stored on the board: update only the current cell for the player
                     playerStatus.setCurrentCell(cellForGoose + playerStatus.getLastSteps());
                 }else {
 
@@ -273,13 +274,22 @@ public class GameManagerImpl implements GameManager {
                     LOGGER.debug("PROCESSING :: move-player - is first/single jump for goose: from {} to {}",
                             cellForGoose, playerStatus.getLastSteps());
 
+                    //Update Player status stored on the board
                     playerStatus.setCurrentCell(nextCellForGoose);
                     playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
                     playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
+
                 }
 
-                isMultiJump = true;
-            }while(gooseCells.contains(playerStatus.getCurrentCell()));
+                isMultiJump = gooseCells.contains(playerStatus.getCurrentCell());
+
+                String theGooseExclamation =
+                        (isMultiJump)?
+                                messagesResourceBundle.getString("application.message.player_move_and_goose_3")
+                                :".";
+
+                messageForGoose += theGooseExclamation;
+            }while(isMultiJump);
 
             simpleViewerComponent.view(messageForGoose);
         }else if(nextCell==bridgeCell) {
