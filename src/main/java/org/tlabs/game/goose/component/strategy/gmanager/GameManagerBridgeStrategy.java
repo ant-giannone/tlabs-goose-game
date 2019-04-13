@@ -9,7 +9,6 @@ import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.ResourceBundle;
 
 public class GameManagerBridgeStrategy implements GameManagerStrategy {
@@ -41,7 +40,7 @@ public class GameManagerBridgeStrategy implements GameManagerStrategy {
                 calculatedPlayerStats.getKey().getName(),
                 calculatedPlayerStats.getValue().getLastDiceRoll(),
                 calculatedPlayerStats.getKey().getName(),
-                (playerStatus.isStart())?startPoint:playerStatus.getCurrentCell(),
+                (playerStatus.isStart()) ? startPoint : playerStatus.getCurrentCell(),
                 calculatedPlayerStats.getKey().getName(),
                 jumpCellFromBridge);
 

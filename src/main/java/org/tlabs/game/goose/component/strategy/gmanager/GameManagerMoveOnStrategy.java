@@ -36,7 +36,7 @@ public class GameManagerMoveOnStrategy implements GameManagerStrategy {
         int nextCell = playerStatus.getCurrentCell() + calculatedPlayerStats.getValue().getLastSteps();
         String message = messagesResourceBundle.getString("application.message.player_move");
 
-       String  messageToView = MessageFormat.format(message,
+        String messageToView = MessageFormat.format(message,
                 calculatedPlayerStats.getKey().getName(),
                 calculatedPlayerStats.getValue().getLastDiceRoll(),
                 calculatedPlayerStats.getKey().getName(),

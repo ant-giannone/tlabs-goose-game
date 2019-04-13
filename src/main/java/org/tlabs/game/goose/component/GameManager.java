@@ -14,6 +14,7 @@ public interface GameManager {
     void playGame() throws ApplicationException;
 
     public void addPlayer(String request) throws UnknownRequestFormatException;
+
     public void showPlayers();
 
     void movePlayer(String request) throws UnknownRequestFormatException, UnknownPlayerException, UnknownStrategyException;

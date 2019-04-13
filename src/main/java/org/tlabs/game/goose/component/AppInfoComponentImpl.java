@@ -33,21 +33,21 @@ public class AppInfoComponentImpl implements AppInfoComponent {
     @Override
     public String getInfoApp() {
 
-        return  String.format("%s -- %s",
-                    properties.getProperty("application.name"),
-                    properties.getProperty("application.welcome"));
+        return String.format("%s -- %s",
+                properties.getProperty("application.name"),
+                properties.getProperty("application.welcome"));
     }
 
     @Override
     public SimpleViewerType getDefaultViewerType() {
 
-        return  SimpleViewerType.valueOf(properties.getProperty("application.viewer.default").toUpperCase());
+        return SimpleViewerType.valueOf(properties.getProperty("application.viewer.default").toUpperCase());
     }
 
     @Override
     public String getDefaultLogsViewer() {
 
-        return  properties.getProperty("application.viewer.logs.appender.name");
+        return properties.getProperty("application.viewer.logs.appender.name");
     }
 
     @Override
@@ -74,6 +74,6 @@ public class AppInfoComponentImpl implements AppInfoComponent {
         String cells = properties.getProperty("application.board.element.goose.cell");
 
         return Arrays.asList(cells.split(","))
-                    .stream().map(number -> Integer.parseInt(number)).collect(Collectors.toList());
+                .stream().map(number -> Integer.parseInt(number)).collect(Collectors.toList());
     }
 }

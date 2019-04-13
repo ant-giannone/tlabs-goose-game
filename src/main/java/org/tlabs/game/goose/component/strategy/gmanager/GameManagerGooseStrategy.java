@@ -42,7 +42,7 @@ public class GameManagerGooseStrategy implements GameManagerStrategy {
 
         do {
 
-            if(isMultiJump) {
+            if (isMultiJump) {
 
                 LOGGER.debug("PROCESSING :: move-player - is multi-jump for goose: from {} to {}",
                         cellForGoose, playerStatus.getLastSteps());
@@ -58,7 +58,7 @@ public class GameManagerGooseStrategy implements GameManagerStrategy {
 
                 //Update Player status stored on the board: update only the current cell for the player
                 playerStatus.setCurrentCell(cellForGoose + playerStatus.getLastSteps());
-            }else {
+            } else {
 
                 int nextCellForGoose = cellForGoose + calculatedPlayerStats.getValue().getLastSteps();
 
@@ -68,7 +68,7 @@ public class GameManagerGooseStrategy implements GameManagerStrategy {
                         calculatedPlayerStats.getKey().getName(),
                         calculatedPlayerStats.getValue().getLastDiceRoll(),
                         calculatedPlayerStats.getKey().getName(),
-                        (playerStatus.isStart())?"Start":playerStatus.getCurrentCell(),
+                        (playerStatus.isStart()) ? "Start" : playerStatus.getCurrentCell(),
                         cellForGoose);
 
                 String periodTwo = MessageFormat.format(
@@ -92,12 +92,12 @@ public class GameManagerGooseStrategy implements GameManagerStrategy {
             isMultiJump = gooseCells.contains(playerStatus.getCurrentCell());
 
             String theGooseExclamation =
-                    (isMultiJump)?
+                    (isMultiJump) ?
                             messagesResourceBundle.getString("application.message.player_move_and_goose_3")
-                            :".";
+                            : ".";
 
             messageForGoose += theGooseExclamation;
-        }while(isMultiJump);
+        } while (isMultiJump);
 
         return messageForGoose;
     }

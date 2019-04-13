@@ -11,9 +11,10 @@ import java.util.Set;
 
 public interface RequestAnalyzer {
 
-    KeyTerms getKeyTerm(String request)  throws UnknownRequestFormatException;
+    KeyTerms getKeyTerm(String request) throws UnknownRequestFormatException;
 
     public String doYouWantAddPlayer(String request) throws UnknownRequestFormatException;
+
     public boolean doYouDigitQuit(String request) throws UnknownRequestFormatException;
 
     Pair<Player, PlayerStatus> howManyStepFor(final Set<Player> players, String request)

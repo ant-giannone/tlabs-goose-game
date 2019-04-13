@@ -6,7 +6,7 @@ public class SimpleUiViewerFactoryImpl implements SimpleUiViewerFactory<SimpleVi
 
     }
 
-    private static class SingletonHelper{
+    private static class SingletonHelper {
         private static final SimpleUiViewerFactoryImpl INSTANCE = new SimpleUiViewerFactoryImpl();
     }
 
@@ -19,9 +19,9 @@ public class SimpleUiViewerFactoryImpl implements SimpleUiViewerFactory<SimpleVi
 
         String type = viewerType.toString();
 
-        if(SimpleViewerType.CONSOLE.toString().equals(type)) {
+        if (SimpleViewerType.CONSOLE.toString().equals(type)) {
             return new SimpleConsoleViewerImpl();
-        } else if(SimpleViewerType.LOGS.toString().equals(type)) {
+        } else if (SimpleViewerType.LOGS.toString().equals(type)) {
             return new SimpleLogViewerImpl();
         }
 

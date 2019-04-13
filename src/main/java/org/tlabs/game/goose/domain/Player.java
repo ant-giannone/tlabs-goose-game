@@ -35,7 +35,7 @@ public class Player {
 
         private void validate() {
 
-            if(this.name == null || this.name.isEmpty()) {
+            if (this.name == null || this.name.isEmpty()) {
                 throw new PlayerValidationRuntimeException("Player's name must not be null or empty");
             }
         }

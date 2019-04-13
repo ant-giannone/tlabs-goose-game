@@ -9,7 +9,7 @@ public class RequestAnalyzerWithDiceStrategy implements RequestAnalyzerStrategy 
     @Override
     public PlayerStatus execute(String[] terms) throws UnknownRequestFormatException {
 
-        if(!"move".equals(terms[0])) {
+        if (!"move".equals(terms[0])) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 

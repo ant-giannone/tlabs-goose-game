@@ -9,7 +9,6 @@ import org.tlabs.game.goose.component.strategy.gmanager.*;
 import org.tlabs.game.goose.component.ui.SimpleUiViewerFactoryImpl;
 import org.tlabs.game.goose.component.ui.SimpleViewerComponent;
 import org.tlabs.game.goose.domain.Board;
-import org.tlabs.game.goose.domain.Dice;
 import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.ApplicationException;
@@ -21,9 +20,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GameManagerImpl implements GameManager {
@@ -62,24 +58,24 @@ public class GameManagerImpl implements GameManager {
 
     private GameManagerStrategy getGameManagerStrategy(Class<? extends GameManagerStrategy> strategyClass) {
 
-        if(!gameManagerStrategyRegistry.containsKey(strategyClass.getName())) {
+        if (!gameManagerStrategyRegistry.containsKey(strategyClass.getName())) {
 
-            if(strategyClass.getName().equals(GameManagerBouncesStrategy.class.getName())) {
+            if (strategyClass.getName().equals(GameManagerBouncesStrategy.class.getName())) {
                 gameManagerStrategyRegistry.put(strategyClass.getName(),
                         new GameManagerBouncesStrategy(appInfoComponent, messagesResourceBundle));
-            }else if(strategyClass.getName().equals(GameManagerBridgeStrategy.class.getName())) {
+            } else if (strategyClass.getName().equals(GameManagerBridgeStrategy.class.getName())) {
                 gameManagerStrategyRegistry.put(strategyClass.getName(),
                         new GameManagerBridgeStrategy(appInfoComponent, messagesResourceBundle));
-            }else if(strategyClass.getName().equals(GameManagerGooseStrategy.class.getName())) {
+            } else if (strategyClass.getName().equals(GameManagerGooseStrategy.class.getName())) {
                 gameManagerStrategyRegistry.put(strategyClass.getName(),
                         new GameManagerGooseStrategy(appInfoComponent, messagesResourceBundle));
-            }else if(strategyClass.getName().equals(GameManagerMoveOnStrategy.class.getName())) {
+            } else if (strategyClass.getName().equals(GameManagerMoveOnStrategy.class.getName())) {
                 gameManagerStrategyRegistry.put(strategyClass.getName(),
                         new GameManagerMoveOnStrategy(appInfoComponent, messagesResourceBundle));
-            }else if(strategyClass.getName().equals(GameManagerStartPointStrategy.class.getName())) {
+            } else if (strategyClass.getName().equals(GameManagerStartPointStrategy.class.getName())) {
                 gameManagerStrategyRegistry.put(strategyClass.getName(),
                         new GameManagerStartPointStrategy(appInfoComponent, messagesResourceBundle));
-            }else if(strategyClass.getName().equals(GameManagerWinStrategy.class.getName())) {
+            } else if (strategyClass.getName().equals(GameManagerWinStrategy.class.getName())) {
                 gameManagerStrategyRegistry.put(strategyClass.getName(),
                         new GameManagerWinStrategy(appInfoComponent, messagesResourceBundle));
             }
@@ -100,7 +96,7 @@ public class GameManagerImpl implements GameManager {
 
         simpleViewerComponent.view(appInfoComponent.getInfoApp());
 
-        if(board == null) {
+        if (board == null) {
             board = new Board(appInfoComponent.getVictoryBoardCellNumber());
         }
 
@@ -172,9 +168,9 @@ public class GameManagerImpl implements GameManager {
 
                 KeyTerms keyTerm = requestAnalyzer.getKeyTerm(request);
 
-                if(keyTerm.equals(KeyTerms.ADD)) {
+                if (keyTerm.equals(KeyTerms.ADD)) {
                     addPlayer(request);
-                } else if(keyTerm.equals(KeyTerms.MOVE)) {
+                } else if (keyTerm.equals(KeyTerms.MOVE)) {
                     movePlayer(request);
 
                     finished = board.isCompleted();
@@ -208,14 +204,14 @@ public class GameManagerImpl implements GameManager {
         String newPlayerName = requestAnalyzer.doYouWantAddPlayer(request);
         Player player = new Player.Builder(newPlayerName).build();
 
-        if(!isDuplicatePlayer(player)) {
+        if (!isDuplicatePlayer(player)) {
 
             this.board.addPlayer(player);
 
             showPlayers();
 
             LOGGER.info("PROCESSING :: add-player - new player added with name: {}", player.getName());
-        }else {
+        } else {
 
             simpleViewerComponent.view(
                     MessageFormat.format(
@@ -261,22 +257,22 @@ public class GameManagerImpl implements GameManager {
         int lastBoardCell = board.getFinalCell();
         String messageToView = "";
 
-        if(gooseCells.contains(nextCell)) {
+        if (gooseCells.contains(nextCell)) {
 
             messageToView = getGameManagerStrategy(GameManagerGooseStrategy.class).execute(board, statusPair);
-        }else if(nextCell==bridgeCell) {
+        } else if (nextCell == bridgeCell) {
 
             messageToView = getGameManagerStrategy(GameManagerBridgeStrategy.class).execute(board, statusPair);
-        }else if(playerStatus.isStart()) {
+        } else if (playerStatus.isStart()) {
 
             messageToView = getGameManagerStrategy(GameManagerStartPointStrategy.class).execute(board, statusPair);
-        }else if(lastBoardCell==nextCell){
+        } else if (lastBoardCell == nextCell) {
 
             messageToView = getGameManagerStrategy(GameManagerWinStrategy.class).execute(board, statusPair);
-        }else if(nextCell>lastBoardCell){
+        } else if (nextCell > lastBoardCell) {
 
             messageToView = getGameManagerStrategy(GameManagerBouncesStrategy.class).execute(board, statusPair);
-        }else {
+        } else {
 
             messageToView = getGameManagerStrategy(GameManagerMoveOnStrategy.class).execute(board, statusPair);
         }
@@ -319,7 +315,7 @@ public class GameManagerImpl implements GameManager {
             return false;
         });
 
-        if(optPlayer.isPresent()) {
+        if (optPlayer.isPresent()) {
 
             Player player = optPlayer.get();
 
@@ -332,7 +328,7 @@ public class GameManagerImpl implements GameManager {
                     currentPlayerStatus.getCurrentCell(),
                     currentPlayerStatus.getCurrentCell(),
                     player.getName(),
-                    currentPlayerLastCell==0?"Start":currentPlayerLastCell);
+                    currentPlayerLastCell == 0 ? "Start" : currentPlayerLastCell);
         }
 
         simpleViewerComponent.view(defaultMessageToView);

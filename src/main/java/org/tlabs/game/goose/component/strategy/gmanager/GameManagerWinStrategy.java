@@ -36,13 +36,13 @@ public class GameManagerWinStrategy implements GameManagerStrategy {
         int nextCell = playerStatus.getCurrentCell() + calculatedPlayerStats.getValue().getLastSteps();
 
         String messageToView = MessageFormat.format(
-                        messagesResourceBundle.getString("application.message.player_move_adn_win"),
-                        calculatedPlayerStats.getKey().getName(),
-                        calculatedPlayerStats.getValue().getLastDiceRoll(),
-                        calculatedPlayerStats.getKey().getName(),
-                        playerStatus.getCurrentCell(),
-                        nextCell,
-                        calculatedPlayerStats.getKey().getName());
+                messagesResourceBundle.getString("application.message.player_move_adn_win"),
+                calculatedPlayerStats.getKey().getName(),
+                calculatedPlayerStats.getValue().getLastDiceRoll(),
+                calculatedPlayerStats.getKey().getName(),
+                playerStatus.getCurrentCell(),
+                nextCell,
+                calculatedPlayerStats.getKey().getName());
 
         board.setCompleted(true);
 

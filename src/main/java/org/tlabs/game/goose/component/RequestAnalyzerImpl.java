@@ -26,13 +26,13 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
     private String[] preAnalyzeRequest(final String request) throws UnknownRequestFormatException {
 
-        if(StringUtils.isEmpty(request)) {
+        if (StringUtils.isEmpty(request)) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: data is empty");
         }
 
         final String normalizedRequest = StringUtils.normalizeSpace(request);
 
-        if(StringUtils.isEmpty(normalizedRequest)) {
+        if (StringUtils.isEmpty(normalizedRequest)) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: normalized data is empty");
         }
 
@@ -40,17 +40,17 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
     }
 
     @Override
-    public KeyTerms getKeyTerm(final String request)  throws UnknownRequestFormatException {
+    public KeyTerms getKeyTerm(final String request) throws UnknownRequestFormatException {
 
         String[] terms = preAnalyzeRequest(request);
 
-        if(terms==null || terms.length<=1) {
+        if (terms == null || terms.length <= 1) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: insufficient terms");
         }
 
-        if("add".equals(terms[0])) {
+        if ("add".equals(terms[0])) {
             return KeyTerms.ADD;
-        }else if("move".equals(terms[0])) {
+        } else if ("move".equals(terms[0])) {
             return KeyTerms.MOVE;
         }
 
@@ -62,16 +62,16 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
         String[] terms = preAnalyzeRequest(request);
 
-        if(terms==null || terms.length!=3) {
+        if (terms == null || terms.length != 3) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
-        if(!("add".equals(terms[0]) && "player".equals(terms[1]))) {
+        if (!("add".equals(terms[0]) && "player".equals(terms[1]))) {
 
             throw new UnknownRequestFormatException("Unable to understand request grammar: grammar not correspond");
         }
 
-        if(StringUtils.isEmpty(terms[2])) {
+        if (StringUtils.isEmpty(terms[2])) {
 
             throw new UnknownRequestFormatException("Unable to understand request grammar: player's name missed");
         }
@@ -84,7 +84,7 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
         String[] terms = preAnalyzeRequest(request);
 
-        if(terms==null || terms.length!=1) {
+        if (terms == null || terms.length != 1) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
@@ -97,7 +97,7 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
         String[] terms = preAnalyzeRequest(request);
 
-        if(terms==null || terms.length>3) {
+        if (terms == null || terms.length > 3) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
@@ -107,7 +107,7 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
         Optional<Player> player = getPlayer(players, terms[1]);
 
-        if(!player.isPresent())
+        if (!player.isPresent())
             throw new UnknownPlayerException("Player not found with name: " + terms[1]);
 
         return new ImmutablePair<>(player.get(), playerStatus);
@@ -120,9 +120,9 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
 
     private RequestAnalyzerStrategy getMovePlayerStrategy(String[] terms) throws UnknownStrategyException {
 
-        if(terms.length==2) {
+        if (terms.length == 2) {
 
-            if(!movePlayerStrategyHashMap.containsKey(RequestAnalyzerWithDiceStrategy.class.getName())) {
+            if (!movePlayerStrategyHashMap.containsKey(RequestAnalyzerWithDiceStrategy.class.getName())) {
 
                 movePlayerStrategyHashMap.put(
                         RequestAnalyzerWithDiceStrategy.class.getName(),
@@ -131,9 +131,9 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
             }
 
             return movePlayerStrategyHashMap.get(RequestAnalyzerWithDiceStrategy.class.getName());
-        }else if(terms.length==3) {
+        } else if (terms.length == 3) {
 
-            if(!movePlayerStrategyHashMap.containsKey(RequestAnalyzerWithoutDiceStrategy.class.getName())) {
+            if (!movePlayerStrategyHashMap.containsKey(RequestAnalyzerWithoutDiceStrategy.class.getName())) {
 
                 movePlayerStrategyHashMap.put(
                         RequestAnalyzerWithoutDiceStrategy.class.getName(),

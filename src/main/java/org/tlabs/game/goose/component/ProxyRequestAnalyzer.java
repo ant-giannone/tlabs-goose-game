@@ -21,7 +21,7 @@ public class ProxyRequestAnalyzer implements RequestAnalyzer {
 
     private void checkInstance() {
 
-        if(requestAnalyzer==null) {
+        if (requestAnalyzer == null) {
             requestAnalyzer = new RequestAnalyzerImpl();
         }
     }

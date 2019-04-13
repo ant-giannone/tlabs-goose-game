@@ -10,7 +10,7 @@ public class ProxyAppInfoComponent implements AppInfoComponent {
 
     private void checkInstance() {
 
-        if(appInfoComponent==null) {
+        if (appInfoComponent == null) {
             appInfoComponent = new AppInfoComponentImpl();
         }
     }
@@ -36,7 +36,7 @@ public class ProxyAppInfoComponent implements AppInfoComponent {
     @Override
     public int getVictoryBoardCellNumber() {
         checkInstance();
-        return  appInfoComponent.getVictoryBoardCellNumber();
+        return appInfoComponent.getVictoryBoardCellNumber();
     }
 
     @Override

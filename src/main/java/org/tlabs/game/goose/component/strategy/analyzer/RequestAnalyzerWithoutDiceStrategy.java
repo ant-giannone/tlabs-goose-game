@@ -9,13 +9,13 @@ public class RequestAnalyzerWithoutDiceStrategy implements RequestAnalyzerStrate
     @Override
     public PlayerStatus execute(String[] terms) throws UnknownRequestFormatException {
 
-        if(!"move".equals(terms[0])) {
+        if (!"move".equals(terms[0])) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
         String[] diceRoll = terms[2].split(",");
 
-        if(diceRoll==null || diceRoll.length!=2 ||
+        if (diceRoll == null || diceRoll.length != 2 ||
                 !(NumberUtils.isDigits(diceRoll[0]) && NumberUtils.isDigits(diceRoll[1]))) {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
