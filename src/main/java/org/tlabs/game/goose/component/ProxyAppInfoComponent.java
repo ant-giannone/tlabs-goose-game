@@ -2,6 +2,8 @@ package org.tlabs.game.goose.component;
 
 import org.tlabs.game.goose.component.ui.SimpleViewerType;
 
+import java.util.List;
+
 public class ProxyAppInfoComponent implements AppInfoComponent {
 
     private AppInfoComponent appInfoComponent;
@@ -47,5 +49,11 @@ public class ProxyAppInfoComponent implements AppInfoComponent {
     public int getJumpCellFromBridge() {
         checkInstance();
         return appInfoComponent.getJumpCellFromBridge();
+    }
+
+    @Override
+    public List<Integer> getGooseCells() {
+        checkInstance();
+        return appInfoComponent.getGooseCells();
     }
 }

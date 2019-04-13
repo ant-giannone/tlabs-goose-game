@@ -211,7 +211,7 @@ public class GameManagerImpl implements GameManager {
     public void movePlayer(String request) throws UnknownRequestFormatException,
             UnknownPlayerException, UnknownStrategyException {
 
-        LOGGER.info("START :: add-player");
+        LOGGER.info("START :: move-player");
 
         Set<Player> players = board.getPlayers();
         Pair<Player, PlayerStatus> statusPair = requestAnalyzer.howManyStepFor(players, request);
@@ -219,13 +219,70 @@ public class GameManagerImpl implements GameManager {
         PlayerStatus playerStatus = board.getPlayerStatus(statusPair.getKey());
         int bridgeCell = appInfoComponent.getBridgeCell();
         int jumpCellFromBridge = appInfoComponent.getJumpCellFromBridge();
+        List<Integer> gooseCells = appInfoComponent.getGooseCells();
 
         String message = messagesResourceBundle.getString("application.message.player_move");
 
         int nextCell = playerStatus.getCurrentCell() + statusPair.getValue().getLastSteps();
         int lastBoadCell = board.getFinalCell();
 
-        if(nextCell==bridgeCell) {
+        if(gooseCells.contains(nextCell)) {
+
+            int cellForGoose = nextCell;
+            boolean isMultiJump = false;
+            String messageForGoose = "";
+
+            do {
+
+                if(isMultiJump) {
+
+                    LOGGER.debug("PROCESSING :: move-player - is multi-jump for goose: from {} to {}",
+                            cellForGoose, playerStatus.getLastSteps());
+
+                    cellForGoose = playerStatus.getCurrentCell();
+
+                    String moveAgainMessage = MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.player_move_and_goose_2"),
+                            statusPair.getKey().getName(),
+                            cellForGoose + playerStatus.getLastSteps());
+
+                    messageForGoose += moveAgainMessage;
+
+                    playerStatus.setCurrentCell(cellForGoose + playerStatus.getLastSteps());
+                }else {
+
+                    int nextCellForGoose = cellForGoose + statusPair.getValue().getLastSteps();
+
+                    //Pippo rolls 1, 1. Pippo moves from 3 to 5, The Goose. Pippo moves again and goes to 7
+                    String periodOne = MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.player_move_and_goose_1"),
+                            statusPair.getKey().getName(),
+                            statusPair.getValue().getLastDiceRoll(),
+                            statusPair.getKey().getName(),
+                            (playerStatus.isStart())?"Start":playerStatus.getCurrentCell(),
+                            cellForGoose);
+
+                    String periodTwo = MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.player_move_and_goose_2"),
+                            statusPair.getKey().getName(),
+                            nextCellForGoose);
+
+                    messageForGoose = periodOne + periodTwo;
+
+
+                    LOGGER.debug("PROCESSING :: move-player - is first/single jump for goose: from {} to {}",
+                            cellForGoose, playerStatus.getLastSteps());
+
+                    playerStatus.setCurrentCell(nextCellForGoose);
+                    playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
+                    playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
+                }
+
+                isMultiJump = true;
+            }while(gooseCells.contains(playerStatus.getCurrentCell()));
+
+            simpleViewerComponent.view(messageForGoose);
+        }else if(nextCell==bridgeCell) {
 
             simpleViewerComponent.view(MessageFormat.format(
                     messagesResourceBundle.getString("application.message.player_move_and_bridge"),
@@ -290,7 +347,7 @@ public class GameManagerImpl implements GameManager {
         playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
         playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
 
-        LOGGER.info("END :: add-player");
+        LOGGER.info("END :: move-player");
     }
 
     private boolean isDuplicatePlayer(final Player newPlayer) {

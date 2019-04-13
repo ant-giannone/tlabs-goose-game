@@ -5,7 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.tlabs.game.goose.component.ui.SimpleViewerType;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class AppInfoComponentImpl implements AppInfoComponent {
 
@@ -63,5 +66,14 @@ public class AppInfoComponentImpl implements AppInfoComponent {
     public int getJumpCellFromBridge() {
 
         return Integer.parseInt(properties.getProperty("application.board.element.bridge.jump_to_cell"));
+    }
+
+    @Override
+    public List<Integer> getGooseCells() {
+
+        String cells = properties.getProperty("application.board.element.goose.cell");
+
+        return Arrays.asList(cells.split(","))
+                    .stream().map(number -> Integer.parseInt(number)).collect(Collectors.toList());
     }
 }
