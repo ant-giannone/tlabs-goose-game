@@ -234,6 +234,7 @@ public class GameManagerImpl implements GameManager {
 
         int nextCell = playerStatus.getCurrentCell() + statusPair.getValue().getLastSteps();
         int lastBoadCell = board.getFinalCell();
+        String messageToView = "";
 
         if(gooseCells.contains(nextCell)) {
 
@@ -300,46 +301,47 @@ public class GameManagerImpl implements GameManager {
                 messageForGoose += theGooseExclamation;
             }while(isMultiJump);
 
-            simpleViewerComponent.view(messageForGoose);
+            messageToView = messageForGoose;
         }else if(nextCell==bridgeCell) {
 
-            simpleViewerComponent.view(MessageFormat.format(
+            messageToView = MessageFormat.format(
                     messagesResourceBundle.getString("application.message.player_move_and_bridge"),
                     statusPair.getKey().getName(),
                     statusPair.getValue().getLastDiceRoll(),
                     statusPair.getKey().getName(),
                     (playerStatus.isStart())?"Start":playerStatus.getCurrentCell(),
                     statusPair.getKey().getName(),
-                    jumpCellFromBridge));
+                    jumpCellFromBridge);
 
             playerStatus.setCurrentCell(jumpCellFromBridge);
         }else if(playerStatus.isStart()) {
 
-            simpleViewerComponent.view(MessageFormat.format(message,
+            messageToView = MessageFormat.format(message,
                     statusPair.getKey().getName(),
                     statusPair.getValue().getLastDiceRoll(),
                     statusPair.getKey().getName(),
                     "Start",
-                    nextCell));
+                    nextCell);
 
             playerStatus.setCurrentCell(nextCell);
         }else if(lastBoadCell==nextCell){
 
-            simpleViewerComponent.view(MessageFormat.format(
+            messageToView = MessageFormat.format(
                     messagesResourceBundle.getString("application.message.player_move_adn_win"),
                     statusPair.getKey().getName(),
                     statusPair.getValue().getLastDiceRoll(),
                     statusPair.getKey().getName(),
                     playerStatus.getCurrentCell(),
                     nextCell,
-                    statusPair.getKey().getName()));
+                    statusPair.getKey().getName());
+
             board.setCompleted(true);
         }else if(nextCell>lastBoadCell){
 
             int bounces = nextCell - lastBoadCell;
             int returnTo = lastBoadCell - bounces;
 
-            simpleViewerComponent.view(MessageFormat.format(
+            messageToView = MessageFormat.format(
                     messagesResourceBundle.getString("application.message.player_move_and_bounces"),
                     statusPair.getKey().getName(),
                     statusPair.getValue().getLastDiceRoll(),
@@ -348,17 +350,17 @@ public class GameManagerImpl implements GameManager {
                     lastBoadCell,
                     statusPair.getKey().getName(),
                     statusPair.getKey().getName(),
-                    returnTo));
+                    returnTo);
 
             playerStatus.setCurrentCell(returnTo);
         }else {
 
-            simpleViewerComponent.view(MessageFormat.format(message,
+            messageToView = MessageFormat.format(message,
                     statusPair.getKey().getName(),
                     statusPair.getValue().getLastDiceRoll(),
                     statusPair.getKey().getName(),
                     playerStatus.getCurrentCell(),
-                    nextCell));
+                    nextCell);
 
             playerStatus.setCurrentCell(nextCell);
         }
@@ -366,7 +368,7 @@ public class GameManagerImpl implements GameManager {
         playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
         playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
 
-        checkCollisionAndMovePlayerTo(currentPlayerLastCell, playerStatus, statusPair.getKey());
+        checkCollisionAndMovePlayerTo(messageToView, currentPlayerLastCell, playerStatus, statusPair.getKey());
 
         LOGGER.info("END :: move-player");
     }
@@ -385,30 +387,41 @@ public class GameManagerImpl implements GameManager {
     }
 
     private void checkCollisionAndMovePlayerTo(
-            int currentPlayerLastCell, PlayerStatus currentPlayerStatus, Player currentPlayer) {
+            final String messageToView, int currentPlayerLastCell,
+            final PlayerStatus currentPlayerStatus, final Player currentPlayer) {
 
-        board.getPlayers().stream().forEach(player -> {
+        String defaultMessageToView = messageToView;
 
-            if(!currentPlayer.getName().equals(player.getName())) {
+        Optional<Player> optPlayer = board.getPlayers().stream().findFirst().filter(player -> {
+
+            if (!currentPlayer.getName().equals(player.getName())) {
 
                 PlayerStatus playerStatus = board.getPlayerStatus(player);
 
-                if(playerStatus.getCurrentCell()==currentPlayerStatus.getCurrentCell()) {
-                    playerStatus.setCurrentCell(currentPlayerLastCell);
-
-                    //Pippo rolls 1, 1. Pippo moves from 15 to 17. On 17 there is Pluto, who returns to 15
-                    simpleViewerComponent.view(MessageFormat.format(
-                            messagesResourceBundle.getString("application.message.player_move_and_shared_location"),
-                            currentPlayer.getName(),
-                            currentPlayerStatus.getLastDiceRoll(),
-                            currentPlayer.getName(),
-                            currentPlayerLastCell,
-                            currentPlayerStatus.getCurrentCell(),
-                            currentPlayerStatus.getCurrentCell(),
-                            player.getName(),
-                            currentPlayerLastCell==0?"Start":currentPlayerLastCell));
+                if (playerStatus.getCurrentCell() == currentPlayerStatus.getCurrentCell()) {
+                    return true;
                 }
             }
+
+            return false;
         });
+
+        if(optPlayer.isPresent()) {
+
+            Player player = optPlayer.get();
+
+            defaultMessageToView = MessageFormat.format(
+                    messagesResourceBundle.getString("application.message.player_move_and_shared_location"),
+                    currentPlayer.getName(),
+                    currentPlayerStatus.getLastDiceRoll(),
+                    currentPlayer.getName(),
+                    currentPlayerLastCell,
+                    currentPlayerStatus.getCurrentCell(),
+                    currentPlayerStatus.getCurrentCell(),
+                    player.getName(),
+                    currentPlayerLastCell==0?"Start":currentPlayerLastCell);
+        }
+
+        simpleViewerComponent.view(defaultMessageToView);
     }
 }
