@@ -1,10 +1,10 @@
-package org.tlabs.game.goose.component.strategy;
+package org.tlabs.game.goose.component.strategy.analyzer;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.UnknownRequestFormatException;
 
-public class MovePlayerWithoutDiceStrategy implements MovePlayerStrategy {
+public class RequestAnalyzerWithoutDiceStrategy implements RequestAnalyzerStrategy {
 
     @Override
     public PlayerStatus execute(String[] terms) throws UnknownRequestFormatException {

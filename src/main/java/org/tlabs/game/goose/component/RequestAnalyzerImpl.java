@@ -3,9 +3,9 @@ package org.tlabs.game.goose.component;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.tlabs.game.goose.component.strategy.MovePlayerStrategy;
-import org.tlabs.game.goose.component.strategy.MovePlayerWithDiceStrategy;
-import org.tlabs.game.goose.component.strategy.MovePlayerWithoutDiceStrategy;
+import org.tlabs.game.goose.component.strategy.analyzer.RequestAnalyzerStrategy;
+import org.tlabs.game.goose.component.strategy.analyzer.RequestAnalyzerWithDiceStrategy;
+import org.tlabs.game.goose.component.strategy.analyzer.RequestAnalyzerWithoutDiceStrategy;
 import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 import org.tlabs.game.goose.exception.UnknownPlayerException;
@@ -18,7 +18,7 @@ import java.util.Set;
 
 public class RequestAnalyzerImpl implements RequestAnalyzer {
 
-    protected HashMap<String, MovePlayerStrategy> movePlayerStrategyHashMap;
+    protected HashMap<String, RequestAnalyzerStrategy> movePlayerStrategyHashMap;
 
     public RequestAnalyzerImpl() {
         movePlayerStrategyHashMap = new HashMap<>();
@@ -101,9 +101,9 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
             throw new UnknownRequestFormatException("Unable to understand request grammar: terms counter doesn't match");
         }
 
-        MovePlayerStrategy movePlayerStrategy = getMovePlayerStrategy(terms);
+        RequestAnalyzerStrategy requestAnalyzerStrategy = getMovePlayerStrategy(terms);
 
-        PlayerStatus playerStatus = movePlayerStrategy.execute(terms);
+        PlayerStatus playerStatus = requestAnalyzerStrategy.execute(terms);
 
         Optional<Player> player = getPlayer(players, terms[1]);
 
@@ -118,32 +118,32 @@ public class RequestAnalyzerImpl implements RequestAnalyzer {
         return players.stream().filter(player -> player.getName().equals(name)).findFirst();
     }
 
-    private MovePlayerStrategy getMovePlayerStrategy(String[] terms) throws UnknownStrategyException {
+    private RequestAnalyzerStrategy getMovePlayerStrategy(String[] terms) throws UnknownStrategyException {
 
         if(terms.length==2) {
 
-            if(!movePlayerStrategyHashMap.containsKey(MovePlayerWithDiceStrategy.class.getName())) {
+            if(!movePlayerStrategyHashMap.containsKey(RequestAnalyzerWithDiceStrategy.class.getName())) {
 
                 movePlayerStrategyHashMap.put(
-                        MovePlayerWithDiceStrategy.class.getName(),
-                        new MovePlayerWithDiceStrategy()
+                        RequestAnalyzerWithDiceStrategy.class.getName(),
+                        new RequestAnalyzerWithDiceStrategy()
                 );
             }
 
-            return movePlayerStrategyHashMap.get(MovePlayerWithDiceStrategy.class.getName());
+            return movePlayerStrategyHashMap.get(RequestAnalyzerWithDiceStrategy.class.getName());
         }else if(terms.length==3) {
 
-            if(!movePlayerStrategyHashMap.containsKey(MovePlayerWithoutDiceStrategy.class.getName())) {
+            if(!movePlayerStrategyHashMap.containsKey(RequestAnalyzerWithoutDiceStrategy.class.getName())) {
 
                 movePlayerStrategyHashMap.put(
-                        MovePlayerWithoutDiceStrategy.class.getName(),
-                        new MovePlayerWithoutDiceStrategy()
+                        RequestAnalyzerWithoutDiceStrategy.class.getName(),
+                        new RequestAnalyzerWithoutDiceStrategy()
                 );
             }
 
-            return movePlayerStrategyHashMap.get(MovePlayerWithoutDiceStrategy.class.getName());
+            return movePlayerStrategyHashMap.get(RequestAnalyzerWithoutDiceStrategy.class.getName());
         }
 
-        throw new UnknownStrategyException("Unknown strategy for MovePlayerStrategy implementation");
+        throw new UnknownStrategyException("Unknown strategy for RequestAnalyzerStrategy implementation");
     }
 }

@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tlabs.game.goose.component.strategy.gmanager.*;
 import org.tlabs.game.goose.component.ui.SimpleUiViewerFactoryImpl;
 import org.tlabs.game.goose.component.ui.SimpleViewerComponent;
 import org.tlabs.game.goose.domain.Board;
@@ -32,15 +33,15 @@ public class GameManagerImpl implements GameManager {
     private static Scanner scanner = new Scanner(new BufferedReader(new InputStreamReader(System.in)));
 
     private Board board;
-    private List<Player> players;
     private ResourceBundle messagesResourceBundle;
     private RequestAnalyzer requestAnalyzer;
     private AppInfoComponent appInfoComponent;
     private SimpleViewerComponent simpleViewerComponent;
+    private HashMap<String, GameManagerStrategy> gameManagerStrategyRegistry;
 
     private GameManagerImpl() {
 
-        players = new ArrayList<>();
+        gameManagerStrategyRegistry = new HashMap<>();
 
         Locale locale = Locale.getDefault();
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
@@ -57,6 +58,34 @@ public class GameManagerImpl implements GameManager {
 
     public static GameManagerImpl getInstance() {
         return SingletonHelper.INSTANCE;
+    }
+
+    private GameManagerStrategy getGameManagerStrategy(Class<? extends GameManagerStrategy> strategyClass) {
+
+        if(!gameManagerStrategyRegistry.containsKey(strategyClass.getName())) {
+
+            if(strategyClass.getName().equals(GameManagerBouncesStrategy.class.getName())) {
+                gameManagerStrategyRegistry.put(strategyClass.getName(),
+                        new GameManagerBouncesStrategy(appInfoComponent, messagesResourceBundle));
+            }else if(strategyClass.getName().equals(GameManagerBridgeStrategy.class.getName())) {
+                gameManagerStrategyRegistry.put(strategyClass.getName(),
+                        new GameManagerBridgeStrategy(appInfoComponent, messagesResourceBundle));
+            }else if(strategyClass.getName().equals(GameManagerGooseStrategy.class.getName())) {
+                gameManagerStrategyRegistry.put(strategyClass.getName(),
+                        new GameManagerGooseStrategy(appInfoComponent, messagesResourceBundle));
+            }else if(strategyClass.getName().equals(GameManagerMoveOnStrategy.class.getName())) {
+                gameManagerStrategyRegistry.put(strategyClass.getName(),
+                        new GameManagerMoveOnStrategy(appInfoComponent, messagesResourceBundle));
+            }else if(strategyClass.getName().equals(GameManagerStartPointStrategy.class.getName())) {
+                gameManagerStrategyRegistry.put(strategyClass.getName(),
+                        new GameManagerStartPointStrategy(appInfoComponent, messagesResourceBundle));
+            }else if(strategyClass.getName().equals(GameManagerWinStrategy.class.getName())) {
+                gameManagerStrategyRegistry.put(strategyClass.getName(),
+                        new GameManagerWinStrategy(appInfoComponent, messagesResourceBundle));
+            }
+        }
+
+        return gameManagerStrategyRegistry.get(strategyClass.getName());
     }
 
     @Override
@@ -90,7 +119,7 @@ public class GameManagerImpl implements GameManager {
             throw new ApplicationException("Game interrupted, restart the game...", scanner.ioException());
         }
 
-        if (CollectionUtils.isEmpty(players)) {
+        if (CollectionUtils.isEmpty(board.getPlayers())) {
 
             LOGGER.debug("PROCESSING :: init-game - players list is empty: create new player");
 
@@ -181,7 +210,6 @@ public class GameManagerImpl implements GameManager {
 
         if(!isDuplicatePlayer(player)) {
 
-            this.players.add(player);
             this.board.addPlayer(player);
 
             showPlayers();
@@ -226,147 +254,32 @@ public class GameManagerImpl implements GameManager {
 
         int currentPlayerLastCell = playerStatus.getCurrentCell();
         int bridgeCell = appInfoComponent.getBridgeCell();
-        int jumpCellFromBridge = appInfoComponent.getJumpCellFromBridge();
 
         List<Integer> gooseCells = appInfoComponent.getGooseCells();
 
-        String message = messagesResourceBundle.getString("application.message.player_move");
-
         int nextCell = playerStatus.getCurrentCell() + statusPair.getValue().getLastSteps();
-        int lastBoadCell = board.getFinalCell();
+        int lastBoardCell = board.getFinalCell();
         String messageToView = "";
 
         if(gooseCells.contains(nextCell)) {
 
-            int cellForGoose = nextCell;
-            boolean isMultiJump = false;
-            String messageForGoose = "";
-
-            do {
-
-                if(isMultiJump) {
-
-                    LOGGER.debug("PROCESSING :: move-player - is multi-jump for goose: from {} to {}",
-                            cellForGoose, playerStatus.getLastSteps());
-
-                    cellForGoose = playerStatus.getCurrentCell();
-
-                    String moveAgainMessage = MessageFormat.format(
-                            messagesResourceBundle.getString("application.message.player_move_and_goose_2"),
-                            statusPair.getKey().getName(),
-                            cellForGoose + playerStatus.getLastSteps());
-
-                    messageForGoose += moveAgainMessage;
-
-                    //Update Player status stored on the board: update only the current cell for the player
-                    playerStatus.setCurrentCell(cellForGoose + playerStatus.getLastSteps());
-                }else {
-
-                    int nextCellForGoose = cellForGoose + statusPair.getValue().getLastSteps();
-
-                    //Pippo rolls 1, 1. Pippo moves from 3 to 5, The Goose. Pippo moves again and goes to 7
-                    String periodOne = MessageFormat.format(
-                            messagesResourceBundle.getString("application.message.player_move_and_goose_1"),
-                            statusPair.getKey().getName(),
-                            statusPair.getValue().getLastDiceRoll(),
-                            statusPair.getKey().getName(),
-                            (playerStatus.isStart())?"Start":playerStatus.getCurrentCell(),
-                            cellForGoose);
-
-                    String periodTwo = MessageFormat.format(
-                            messagesResourceBundle.getString("application.message.player_move_and_goose_2"),
-                            statusPair.getKey().getName(),
-                            nextCellForGoose);
-
-                    messageForGoose = periodOne + periodTwo;
-
-
-                    LOGGER.debug("PROCESSING :: move-player - is first/single jump for goose: from {} to {}",
-                            cellForGoose, playerStatus.getLastSteps());
-
-                    //Update Player status stored on the board
-                    playerStatus.setCurrentCell(nextCellForGoose);
-                    playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
-                    playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
-
-                }
-
-                isMultiJump = gooseCells.contains(playerStatus.getCurrentCell());
-
-                String theGooseExclamation =
-                        (isMultiJump)?
-                                messagesResourceBundle.getString("application.message.player_move_and_goose_3")
-                                :".";
-
-                messageForGoose += theGooseExclamation;
-            }while(isMultiJump);
-
-            messageToView = messageForGoose;
+            messageToView = getGameManagerStrategy(GameManagerGooseStrategy.class).execute(board, statusPair);
         }else if(nextCell==bridgeCell) {
 
-            messageToView = MessageFormat.format(
-                    messagesResourceBundle.getString("application.message.player_move_and_bridge"),
-                    statusPair.getKey().getName(),
-                    statusPair.getValue().getLastDiceRoll(),
-                    statusPair.getKey().getName(),
-                    (playerStatus.isStart())?"Start":playerStatus.getCurrentCell(),
-                    statusPair.getKey().getName(),
-                    jumpCellFromBridge);
-
-            playerStatus.setCurrentCell(jumpCellFromBridge);
+            messageToView = getGameManagerStrategy(GameManagerBridgeStrategy.class).execute(board, statusPair);
         }else if(playerStatus.isStart()) {
 
-            messageToView = MessageFormat.format(message,
-                    statusPair.getKey().getName(),
-                    statusPair.getValue().getLastDiceRoll(),
-                    statusPair.getKey().getName(),
-                    "Start",
-                    nextCell);
+            messageToView = getGameManagerStrategy(GameManagerStartPointStrategy.class).execute(board, statusPair);
+        }else if(lastBoardCell==nextCell){
 
-            playerStatus.setCurrentCell(nextCell);
-        }else if(lastBoadCell==nextCell){
+            messageToView = getGameManagerStrategy(GameManagerWinStrategy.class).execute(board, statusPair);
+        }else if(nextCell>lastBoardCell){
 
-            messageToView = MessageFormat.format(
-                    messagesResourceBundle.getString("application.message.player_move_adn_win"),
-                    statusPair.getKey().getName(),
-                    statusPair.getValue().getLastDiceRoll(),
-                    statusPair.getKey().getName(),
-                    playerStatus.getCurrentCell(),
-                    nextCell,
-                    statusPair.getKey().getName());
-
-            board.setCompleted(true);
-        }else if(nextCell>lastBoadCell){
-
-            int bounces = nextCell - lastBoadCell;
-            int returnTo = lastBoadCell - bounces;
-
-            messageToView = MessageFormat.format(
-                    messagesResourceBundle.getString("application.message.player_move_and_bounces"),
-                    statusPair.getKey().getName(),
-                    statusPair.getValue().getLastDiceRoll(),
-                    statusPair.getKey().getName(),
-                    playerStatus.getCurrentCell(),
-                    lastBoadCell,
-                    statusPair.getKey().getName(),
-                    statusPair.getKey().getName(),
-                    returnTo);
-
-            playerStatus.setCurrentCell(returnTo);
+            messageToView = getGameManagerStrategy(GameManagerBouncesStrategy.class).execute(board, statusPair);
         }else {
 
-            messageToView = MessageFormat.format(message,
-                    statusPair.getKey().getName(),
-                    statusPair.getValue().getLastDiceRoll(),
-                    statusPair.getKey().getName(),
-                    playerStatus.getCurrentCell(),
-                    nextCell);
-
-            playerStatus.setCurrentCell(nextCell);
+            messageToView = getGameManagerStrategy(GameManagerMoveOnStrategy.class).execute(board, statusPair);
         }
-
-        playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
-        playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
 
         checkCollisionAndMovePlayerTo(messageToView, currentPlayerLastCell, playerStatus, statusPair.getKey());
 
@@ -375,7 +288,7 @@ public class GameManagerImpl implements GameManager {
 
     private boolean isDuplicatePlayer(final Player newPlayer) {
 
-        Optional<Player> optionalPlayer = players.stream().findAny().filter(
+        Optional<Player> optionalPlayer = board.getPlayers().stream().findAny().filter(
                 player -> newPlayer.getName().equals(player.getName()));
 
         if (optionalPlayer.isPresent()) {
