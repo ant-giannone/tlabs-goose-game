@@ -20,6 +20,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GameManagerImpl implements GameManager {
@@ -213,12 +216,18 @@ public class GameManagerImpl implements GameManager {
 
         LOGGER.info("START :: move-player");
 
+        /**
+         * The player object returned is exactly the same object on the board as reference.
+         * No new instance is created, so I can perform comparison and search processing by reference object
+         * */
         Set<Player> players = board.getPlayers();
         Pair<Player, PlayerStatus> statusPair = requestAnalyzer.howManyStepFor(players, request);
-
         PlayerStatus playerStatus = board.getPlayerStatus(statusPair.getKey());
+
+        int currentPlayerLastCell = playerStatus.getCurrentCell();
         int bridgeCell = appInfoComponent.getBridgeCell();
         int jumpCellFromBridge = appInfoComponent.getJumpCellFromBridge();
+
         List<Integer> gooseCells = appInfoComponent.getGooseCells();
 
         String message = messagesResourceBundle.getString("application.message.player_move");
@@ -357,6 +366,8 @@ public class GameManagerImpl implements GameManager {
         playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
         playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
 
+        checkCollisionAndMovePlayerTo(currentPlayerLastCell, playerStatus, statusPair.getKey());
+
         LOGGER.info("END :: move-player");
     }
 
@@ -371,5 +382,33 @@ public class GameManagerImpl implements GameManager {
         }
 
         return false;
+    }
+
+    private void checkCollisionAndMovePlayerTo(
+            int currentPlayerLastCell, PlayerStatus currentPlayerStatus, Player currentPlayer) {
+
+        board.getPlayers().stream().forEach(player -> {
+
+            if(!currentPlayer.getName().equals(player.getName())) {
+
+                PlayerStatus playerStatus = board.getPlayerStatus(player);
+
+                if(playerStatus.getCurrentCell()==currentPlayerStatus.getCurrentCell()) {
+                    playerStatus.setCurrentCell(currentPlayerLastCell);
+
+                    //Pippo rolls 1, 1. Pippo moves from 15 to 17. On 17 there is Pluto, who returns to 15
+                    simpleViewerComponent.view(MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.player_move_and_shared_location"),
+                            currentPlayer.getName(),
+                            currentPlayerStatus.getLastDiceRoll(),
+                            currentPlayer.getName(),
+                            currentPlayerLastCell,
+                            currentPlayerStatus.getCurrentCell(),
+                            currentPlayerStatus.getCurrentCell(),
+                            player.getName(),
+                            currentPlayerLastCell==0?"Start":currentPlayerLastCell));
+                }
+            }
+        });
     }
 }
