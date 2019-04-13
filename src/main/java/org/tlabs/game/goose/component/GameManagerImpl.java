@@ -142,6 +142,8 @@ public class GameManagerImpl implements GameManager {
                     addPlayer(request);
                 } else if(keyTerm.equals(KeyTerms.MOVE)) {
                     movePlayer(request);
+
+                    finished = board.isCompleted();
                 }
             } catch (UnknownRequestFormatException e) {
 
@@ -207,6 +209,7 @@ public class GameManagerImpl implements GameManager {
         String message = messagesResourceBundle.getString("application.message.player_move");
 
         int nextCell = playerStatus.getCurrentCell() + statusPair.getValue().getLastSteps();
+        int lastBoadCell = board.getFinalCell();
 
         if(playerStatus.isStart()) {
 
@@ -216,6 +219,36 @@ public class GameManagerImpl implements GameManager {
                     statusPair.getKey().getName(),
                     "Start",
                     nextCell));
+
+            playerStatus.setCurrentCell(nextCell);
+        }else if(lastBoadCell==nextCell){
+
+            simpleViewerComponent.view(MessageFormat.format(
+                    messagesResourceBundle.getString("application.message.player_move_adn_win"),
+                    statusPair.getKey().getName(),
+                    statusPair.getValue().getLastDiceRoll(),
+                    statusPair.getKey().getName(),
+                    playerStatus.getCurrentCell(),
+                    nextCell,
+                    statusPair.getKey().getName()));
+            board.setCompleted(true);
+        }else if(nextCell>lastBoadCell){
+
+            int bounces = nextCell - lastBoadCell;
+            int returnTo = lastBoadCell - bounces;
+
+            simpleViewerComponent.view(MessageFormat.format(
+                    messagesResourceBundle.getString("application.message.player_move_and_bounces"),
+                    statusPair.getKey().getName(),
+                    statusPair.getValue().getLastDiceRoll(),
+                    statusPair.getKey().getName(),
+                    playerStatus.getCurrentCell(),
+                    lastBoadCell,
+                    statusPair.getKey().getName(),
+                    statusPair.getKey().getName(),
+                    returnTo));
+
+            playerStatus.setCurrentCell(returnTo);
         }else {
 
             simpleViewerComponent.view(MessageFormat.format(message,
@@ -224,11 +257,12 @@ public class GameManagerImpl implements GameManager {
                     statusPair.getKey().getName(),
                     playerStatus.getCurrentCell(),
                     nextCell));
+
+            playerStatus.setCurrentCell(nextCell);
         }
 
         playerStatus.setLastSteps(statusPair.getValue().getLastSteps());
         playerStatus.setLastDiceRoll(statusPair.getValue().getLastDiceRoll());
-        playerStatus.setCurrentCell(nextCell);
 
         LOGGER.info("END :: add-player");
     }
