@@ -34,7 +34,7 @@ public class GameManagerBridgeStrategyTest {
     @Before
     public void setUp() throws Exception {
 
-        Locale locale = Locale.getDefault();
+        Locale locale = new Locale.Builder().setLanguage(Locale.ENGLISH.getLanguage()).build();
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
         appInfoComponent = new ProxyAppInfoComponent();
         gameManagerStrategy = new GameManagerBridgeStrategy(appInfoComponent, messagesResourceBundle);

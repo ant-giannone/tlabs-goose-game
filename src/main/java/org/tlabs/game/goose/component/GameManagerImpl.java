@@ -39,7 +39,7 @@ public class GameManagerImpl implements GameManager {
 
         gameManagerStrategyRegistry = new HashMap<>();
 
-        Locale locale = Locale.getDefault();
+        Locale locale = new Locale.Builder().setLanguage(Locale.ENGLISH.getLanguage()).build();
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
 
         appInfoComponent = new ProxyAppInfoComponent();
