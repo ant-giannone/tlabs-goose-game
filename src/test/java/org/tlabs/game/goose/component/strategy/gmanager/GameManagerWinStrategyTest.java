@@ -11,6 +11,7 @@ import org.tlabs.game.goose.domain.Board;
 import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -23,6 +24,8 @@ public class GameManagerWinStrategyTest {
     private Player bob;
     private PlayerStatus alicePs;
     private PlayerStatus bobPs;
+    private Pair<Player, PlayerStatus> aliceCalculatedStats;
+    private Pair<Player, PlayerStatus> bobCalculatedStats;
 
     private ResourceBundle messagesResourceBundle;
     private AppInfoComponent appInfoComponent;
@@ -34,7 +37,7 @@ public class GameManagerWinStrategyTest {
         Locale locale = Locale.getDefault();
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
         appInfoComponent = new ProxyAppInfoComponent();
-        gameManagerStrategy = new GameManagerMoveOnStrategy(appInfoComponent, messagesResourceBundle);
+        gameManagerStrategy = new GameManagerWinStrategy(appInfoComponent, messagesResourceBundle);
 
         board = new Board(appInfoComponent.getVictoryBoardCellNumber());
 
@@ -47,12 +50,26 @@ public class GameManagerWinStrategyTest {
         alicePs = board.getPlayerStatus(alice);
         alicePs.setLastSteps(5);
         alicePs.setLastDiceRoll("2,3");
-        alicePs.setCurrentCell(34);
+        alicePs.setCurrentCell(60);
 
         bobPs = board.getPlayerStatus(bob);
         bobPs.setLastSteps(8);
         bobPs.setLastDiceRoll("5,3");
         bobPs.setCurrentCell(42);
+
+
+        PlayerStatus aliceCalculatedStatus = new PlayerStatus();
+        aliceCalculatedStatus.setLastSteps(3);
+        aliceCalculatedStatus.setLastDiceRoll("1,2");
+        aliceCalculatedStatus.setCurrentCell(63);
+
+        PlayerStatus bobCalculatedStatus = new PlayerStatus();
+        bobCalculatedStatus.setLastSteps(5);
+        bobCalculatedStatus.setLastDiceRoll("2,3");
+        bobCalculatedStatus.setCurrentCell(5);
+
+        aliceCalculatedStats = Pair.of(alice, aliceCalculatedStatus);
+        bobCalculatedStats = Pair.of(bob, bobCalculatedStatus);
     }
 
     @After
@@ -62,17 +79,20 @@ public class GameManagerWinStrategyTest {
     @Test
     public void execute() {
 
-        Pair<Player, PlayerStatus> aliceStats = Pair.of(alice, alicePs);
+        PlayerStatus playerStatus = board.getPlayerStatus(alice);
+        int nextCell = playerStatus.getCurrentCell() + aliceCalculatedStats.getValue().getLastSteps();
 
-        String mockMessage = String.format("%s rolls %s. %s moves from %s to %s",
-                alice.getName(),
-                alicePs.getLastDiceRoll(),
-                alice.getName(),
-                alicePs.getCurrentCell(),
-                (alicePs.getCurrentCell() + alicePs.getLastSteps()));
+        String messageToView = MessageFormat.format(
+                messagesResourceBundle.getString("application.message.player_move_adn_win"),
+                aliceCalculatedStats.getKey().getName(),
+                aliceCalculatedStats.getValue().getLastDiceRoll(),
+                aliceCalculatedStats.getKey().getName(),
+                playerStatus.getCurrentCell(),
+                nextCell,
+                aliceCalculatedStats.getKey().getName());
 
-        String message = gameManagerStrategy.execute(board, aliceStats);
+        String message = gameManagerStrategy.execute(board, aliceCalculatedStats);
 
-        Assert.assertTrue(message.equals(mockMessage));
+        Assert.assertTrue(message.equals(messageToView));
     }
 }

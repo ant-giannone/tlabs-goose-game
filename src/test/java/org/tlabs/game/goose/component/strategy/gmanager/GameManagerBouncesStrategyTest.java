@@ -11,6 +11,7 @@ import org.tlabs.game.goose.domain.Board;
 import org.tlabs.game.goose.domain.Player;
 import org.tlabs.game.goose.domain.PlayerStatus;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -34,7 +35,7 @@ public class GameManagerBouncesStrategyTest {
         Locale locale = Locale.getDefault();
         messagesResourceBundle = ResourceBundle.getBundle("i18n.messages", locale);
         appInfoComponent = new ProxyAppInfoComponent();
-        gameManagerStrategy = new GameManagerMoveOnStrategy(appInfoComponent, messagesResourceBundle);
+        gameManagerStrategy = new GameManagerBouncesStrategy(appInfoComponent, messagesResourceBundle);
 
         board = new Board(appInfoComponent.getVictoryBoardCellNumber());
 
@@ -52,7 +53,7 @@ public class GameManagerBouncesStrategyTest {
         bobPs = board.getPlayerStatus(bob);
         bobPs.setLastSteps(8);
         bobPs.setLastDiceRoll("5,3");
-        bobPs.setCurrentCell(42);
+        bobPs.setCurrentCell(60);
     }
 
     @After
@@ -62,17 +63,21 @@ public class GameManagerBouncesStrategyTest {
     @Test
     public void execute() {
 
-        Pair<Player, PlayerStatus> aliceStats = Pair.of(alice, alicePs);
+        Pair<Player, PlayerStatus> bobStats = Pair.of(bob, bobPs);
 
-        String mockMessage = String.format("%s rolls %s. %s moves from %s to %s",
-                alice.getName(),
-                alicePs.getLastDiceRoll(),
-                alice.getName(),
-                alicePs.getCurrentCell(),
-                (alicePs.getCurrentCell() + alicePs.getLastSteps()));
+        String messageToView = MessageFormat.format(
+                messagesResourceBundle.getString("application.message.player_move_and_bounces"),
+                bobStats.getKey().getName(),
+                bobStats.getValue().getLastDiceRoll(),
+                bobStats.getKey().getName(),
+                bobStats.getValue().getCurrentCell(),
+                board.getFinalCell(),
+                bobStats.getKey().getName(),
+                bobStats.getKey().getName(),
+                58);
 
-        String message = gameManagerStrategy.execute(board, aliceStats);
+        String message = gameManagerStrategy.execute(board, bobStats);
 
-        Assert.assertTrue(message.equals(mockMessage));
+        Assert.assertTrue(message.equals(messageToView));
     }
 }
