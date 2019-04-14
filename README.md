@@ -1,9 +1,7 @@
 # The game of goose, to have some fun
 
-The project concerns a basic implementation of the goose game.  
-Within the code, even if in a simple way, there are some patters:  
-**singleton**, **strategy**, **factory**, **proxy** and **builder** pattern.  
-There are also some unit tests
+The project concerns a basic implementation of the goose game. Within the code, even if in a simple way, there are some patterns: 
+**singleton**, **strategy**, **factory**, **proxy** and **builder** pattern.   There are also some unit tests
 
 **If you have suggestions on how to improve or possibly rethink some parts of the code,  
 I would be happy to receive them.**
