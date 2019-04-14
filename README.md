@@ -73,3 +73,5 @@ move alice 4,6
 ```
 move alice
 ```
+
+***I hope you have fun***
