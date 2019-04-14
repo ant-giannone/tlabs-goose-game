@@ -284,12 +284,10 @@ public class GameManagerImpl implements GameManager {
 
     private boolean isDuplicatePlayer(final Player newPlayer) {
 
-        Optional<Player> optionalPlayer = board.getPlayers().stream().findAny().filter(
-                player -> newPlayer.getName().equals(player.getName()));
+        for (Player player : board.getPlayers()) {
 
-        if (optionalPlayer.isPresent()) {
-
-            return true;
+            if(newPlayer.getName().equals(player.getName()))
+                return true;
         }
 
         return false;
