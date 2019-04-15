@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class GameManagerImpl implements GameManager {
@@ -299,34 +300,30 @@ public class GameManagerImpl implements GameManager {
 
         String defaultMessageToView = messageToView;
 
-        Optional<Player> optPlayer = board.getPlayers().stream().findFirst().filter(player -> {
+        for (Player player : board.getPlayers()) {
 
             if (!currentPlayer.getName().equals(player.getName())) {
 
                 PlayerStatus playerStatus = board.getPlayerStatus(player);
 
                 if (playerStatus.getCurrentCell() == currentPlayerStatus.getCurrentCell()) {
-                    return true;
+
+                    defaultMessageToView = MessageFormat.format(
+                            messagesResourceBundle.getString("application.message.player_move_and_shared_location"),
+                            currentPlayer.getName(),
+                            currentPlayerStatus.getLastDiceRoll(),
+                            currentPlayer.getName(),
+                            currentPlayerLastCell,
+                            currentPlayerStatus.getCurrentCell(),
+                            currentPlayerStatus.getCurrentCell(),
+                            player.getName(),
+                            currentPlayerLastCell == 0 ? "Start" : currentPlayerLastCell);
+
+                    playerStatus.setCurrentCell(currentPlayerLastCell);
+
+                    break;
                 }
             }
-
-            return false;
-        });
-
-        if (optPlayer.isPresent()) {
-
-            Player player = optPlayer.get();
-
-            defaultMessageToView = MessageFormat.format(
-                    messagesResourceBundle.getString("application.message.player_move_and_shared_location"),
-                    currentPlayer.getName(),
-                    currentPlayerStatus.getLastDiceRoll(),
-                    currentPlayer.getName(),
-                    currentPlayerLastCell,
-                    currentPlayerStatus.getCurrentCell(),
-                    currentPlayerStatus.getCurrentCell(),
-                    player.getName(),
-                    currentPlayerLastCell == 0 ? "Start" : currentPlayerLastCell);
         }
 
         simpleViewerComponent.view(defaultMessageToView);
